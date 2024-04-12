@@ -1,6 +1,7 @@
 import os
 import boto3
 import datetime
+import subprocess
 from config import load_env
 from dateutil.tz import tzutc
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
@@ -9,7 +10,6 @@ def download_folder(bucket_name, prefix, local_dir, access_key, secret_key, endp
     s3 = boto3.client('s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key, endpoint_url=endpoint_url, region_name=region)
     
     fromDate = datetime.datetime(*date, tzinfo=tzutc())
-    print(fromDate)
     try:
         paginator = s3.get_paginator('list_objects_v2')
         operation_parameters = {'Bucket': bucket_name, 'Prefix': prefix}
@@ -27,6 +27,11 @@ def download_folder(bucket_name, prefix, local_dir, access_key, secret_key, endp
                     print(f"Downloaded: {local_file_path}")
 
         print("Download completed!")
+        command = "aws s3 sync files s3://mi-bucket/" + prefix
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+        print("Synchronizing files...")
+        print(result.stdout)
     except NoCredentialsError:
         print("Credentials not available.")
     except PartialCredentialsError:
